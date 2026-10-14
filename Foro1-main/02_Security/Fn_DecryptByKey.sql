@@ -1,6 +1,6 @@
 --Fn_DecryptByKey.sql
 
-﻿USE [DB_SCRUM_PLANNING]
+USE [DB_SCRUM_PLANNING]
 GO
 
 ----------------------------------------

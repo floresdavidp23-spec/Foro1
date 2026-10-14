@@ -117,6 +117,7 @@ BEGIN
                     userPassword,
                     userRolId,
                     userCreationDate,
+                    userModificationDate,
                     userCreatorId,
                     userEnable
                 )
@@ -128,6 +129,7 @@ BEGIN
                     @w_userPasswordEncrypted,
                     @i_userRolId,
                     @i_userCreationDate,
+                    @i_userModificationDate,
                     @i_userCreatorId,
                     1
                 );
