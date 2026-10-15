@@ -18,6 +18,8 @@ CREATE OR ALTER PROCEDURE SQM_GENERAL.USP_ProductBacklogItems
     @i_PBICreatorId INT = NULL,
     @i_PBIModificatorId INT = NULL,
     @i_PBIStatus INT = NULL,
+    @i_PageNumber INT = 1,
+    @i_RowsPerPage INT = 10,
     @w_Accion CHAR(1)
 )
 AS
@@ -87,6 +89,19 @@ BEGIN
 
         PRINT 'ELEMENTO DEL PRODUCT BACKLOG ACTUALIZADO CORRECTAMENTE';
 
+    END
+
+    -- LISTAR CON PAGINACION
+    ELSE IF @w_Accion = 'S'
+    BEGIN
+        IF @i_PageNumber < 1 SET @i_PageNumber = 1;
+        IF @i_RowsPerPage < 1 SET @i_RowsPerPage = 10;
+
+        SELECT *
+        FROM SQM_GENERAL.TBL_ProductBacklogItems
+        ORDER BY PBIId
+        OFFSET (@i_PageNumber - 1) * @i_RowsPerPage ROWS
+        FETCH NEXT @i_RowsPerPage ROWS ONLY;
     END
 
 END;

@@ -17,6 +17,8 @@ CREATE OR ALTER PROCEDURE SQM_GENERAL.USP_Features
     @i_featureCreatorId INT = NULL,
     @i_featureModificatorId INT = NULL,
     @i_featureStatus INT = NULL,
+    @i_PageNumber INT = 1,
+    @i_RowsPerPage INT = 10,
     @w_Accion CHAR(1)
 )
 AS
@@ -83,6 +85,19 @@ BEGIN
 
         PRINT 'FEATURE ACTUALIZADA CORRECTAMENTE';
 
+    END
+
+    -- LISTAR CON PAGINACION
+    ELSE IF @w_Accion = 'S'
+    BEGIN
+        IF @i_PageNumber < 1 SET @i_PageNumber = 1;
+        IF @i_RowsPerPage < 1 SET @i_RowsPerPage = 10;
+
+        SELECT *
+        FROM SQM_GENERAL.TBL_Features
+        ORDER BY featureId
+        OFFSET (@i_PageNumber - 1) * @i_RowsPerPage ROWS
+        FETCH NEXT @i_RowsPerPage ROWS ONLY;
     END
 
 END;

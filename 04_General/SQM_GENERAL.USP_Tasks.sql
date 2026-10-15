@@ -20,6 +20,8 @@ CREATE OR ALTER PROCEDURE SQM_GENERAL.USP_Tasks
     @i_taskCreatorId INT = NULL,
     @i_taskModificatorId INT = NULL,
     @i_taskStatus INT = NULL,
+    @i_PageNumber INT = 1,
+    @i_RowsPerPage INT = 10,
     @w_Accion CHAR(1)
 )
 AS
@@ -95,6 +97,19 @@ BEGIN
 
         PRINT 'TAREA ACTUALIZADA CORRECTAMENTE';
 
+    END
+
+    -- LISTAR CON PAGINACION
+    ELSE IF @w_Accion = 'S'
+    BEGIN
+        IF @i_PageNumber < 1 SET @i_PageNumber = 1;
+        IF @i_RowsPerPage < 1 SET @i_RowsPerPage = 10;
+
+        SELECT *
+        FROM SQM_GENERAL.TBL_Tasks
+        ORDER BY taskId
+        OFFSET (@i_PageNumber - 1) * @i_RowsPerPage ROWS
+        FETCH NEXT @i_RowsPerPage ROWS ONLY;
     END
 
 END;

@@ -1,6 +1,9 @@
 --SQM_CATALOGS.USP_Status.sql
 
-CREATE   PROC SQM_CATALOGS.USP_Status  
+USE DB_SCRUM_PLANNING;
+GO
+
+CREATE OR ALTER PROC SQM_CATALOGS.USP_Status  
 (  
     @i_statusId INT = NULL,  
     @i_statusName VARCHAR(80) = NULL,  
@@ -66,4 +69,5 @@ VALUES
   
     END  
   
-END;  
+END;
+GO

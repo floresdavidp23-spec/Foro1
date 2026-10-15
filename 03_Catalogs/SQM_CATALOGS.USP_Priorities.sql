@@ -10,6 +10,8 @@ CREATE OR ALTER PROCEDURE SQM_CATALOGS.USP_Priorities
     @i_priorityCreatorId INT = NULL,
     @i_priorityModificatorId INT = NULL,
     @i_priorityEnable BIT = NULL,
+    @i_PageNumber INT = 1,
+    @i_RowsPerPage INT = 10,
     @w_Accion CHAR(1)
 )
 AS
@@ -55,6 +57,19 @@ BEGIN
 
         PRINT 'PRIORIDAD ACTUALIZADA CORRECTAMENTE';
 
+    END
+
+    -- LISTAR CON PAGINACION
+    ELSE IF @w_Accion = 'S'
+    BEGIN
+        IF @i_PageNumber < 1 SET @i_PageNumber = 1;
+        IF @i_RowsPerPage < 1 SET @i_RowsPerPage = 10;
+
+        SELECT *
+        FROM SQM_CATALOGS.TBL_Priorities
+        ORDER BY priorityId
+        OFFSET (@i_PageNumber - 1) * @i_RowsPerPage ROWS
+        FETCH NEXT @i_RowsPerPage ROWS ONLY;
     END
 
 END;

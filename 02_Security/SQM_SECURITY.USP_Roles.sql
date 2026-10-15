@@ -10,6 +10,8 @@ CREATE OR ALTER PROCEDURE SQM_SECURITY.USP_Roles
     @i_rolCreatorId INT = NULL,
     @i_rolModificatorId INT = NULL,
     @i_rolEnable BIT = NULL,
+    @i_PageNumber INT = 1,
+    @i_RowsPerPage INT = 10,
     @w_Accion CHAR(1)
 )
 AS
@@ -55,6 +57,19 @@ BEGIN
 
         PRINT 'ROL ACTUALIZADO CORRECTAMENTE';
 
+    END
+
+    -- LISTAR CON PAGINACION
+    ELSE IF @w_Accion = 'S'
+    BEGIN
+        IF @i_PageNumber < 1 SET @i_PageNumber = 1;
+        IF @i_RowsPerPage < 1 SET @i_RowsPerPage = 10;
+
+        SELECT *
+        FROM SQM_SECURITY.TBL_Roles
+        ORDER BY rolId
+        OFFSET (@i_PageNumber - 1) * @i_RowsPerPage ROWS
+        FETCH NEXT @i_RowsPerPage ROWS ONLY;
     END
 
 END;

@@ -12,6 +12,8 @@ CREATE OR ALTER PROCEDURE SQM_GENERAL.USP_TaskComments
     @i_taskCommentCreatorId INT = NULL,
     @i_taskCommentModificatorId INT = NULL,
     @i_taskCommentStatus BIT = NULL,
+    @i_PageNumber INT = 1,
+    @i_RowsPerPage INT = 10,
     @w_Accion CHAR(1)
 )
 AS
@@ -63,6 +65,19 @@ BEGIN
 
         PRINT 'COMENTARIO ACTUALIZADO CORRECTAMENTE';
 
+    END
+
+    -- LISTAR CON PAGINACION
+    ELSE IF @w_Accion = 'S'
+    BEGIN
+        IF @i_PageNumber < 1 SET @i_PageNumber = 1;
+        IF @i_RowsPerPage < 1 SET @i_RowsPerPage = 10;
+
+        SELECT *
+        FROM SQM_GENERAL.TBL_TaskComments
+        ORDER BY taskCommentId
+        OFFSET (@i_PageNumber - 1) * @i_RowsPerPage ROWS
+        FETCH NEXT @i_RowsPerPage ROWS ONLY;
     END
 
 END;
