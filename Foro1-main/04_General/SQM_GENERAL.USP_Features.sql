@@ -1,3 +1,5 @@
+--SQM_GENERAL.USP_Features
+
 USE DB_SCRUM_PLANNING;
 GO
 
@@ -30,7 +32,7 @@ BEGIN
         (
             featureSummary,
             featureDescription,
-            featuresAcceptanceCriteria, -- Nombre exacto de la tabla física
+            featuresAcceptanceCriteria,
             featureOwner,
             featureParentLink,
             featurePriority,
@@ -70,7 +72,7 @@ BEGIN
         UPDATE SQM_GENERAL.TBL_Features
         SET featureSummary = @i_featureSummary,
             featureDescription = @i_featureDescription,
-            featuresAcceptanceCriteria = @i_featureAcceptanceCriteria, -- Nombre exacto de la tabla física
+            featuresAcceptanceCriteria = @i_featureAcceptanceCriteria,
             featureOwner = @i_featureOwner,
             featureParentLink = @i_featureParentLink,
             featurePriority = @i_featurePriority,
