@@ -1,56 +1,52 @@
 USE DB_SCRUM_PLANNING;
 GO
 
--- =============================================
--- PRUEBA 1: INSERTAR FEATURE
--- =============================================
+DECLARE @n INT, @mt VARCHAR(500), @mu VARCHAR(500);
+DECLARE @featureId INT;
 
-EXEC SQM_GENERAL.USP_Features
-    @i_featureSummary = 'Feature de Prueba',
-    @i_featureDescription = 'Descripcion para comprobar el INSERT y UPDATE',
-    @i_featureAcceptanceCriteria = 'La funcionalidad debe registrarse correctamente',
-    @i_featureOwner = 2,
-    @i_featureParentLink = 3,
-    @i_featurePriority = 1,
-    @i_featureStartDate = '2026-10-14',
-    @i_featureDueDate = '2026-10-30',
-    @i_featureCreatorId = 2,
-    @i_featureStatus = 3,
-    @w_Accion = 'I';
-GO
+-- =========== 1. INSERTAR (espera 201) ===========
+EXEC [SQM_GENERAL].[USP_Features]
+     @w_Accion = 'I',
+     @i_featureSummary = 'Feature de prueba',
+     @i_featureDescription = 'Descripcion de prueba',
+     @i_featureAcceptanceCriteria = 'Criterios de prueba',
+     @i_featureParentLink = 4,
+     @i_featureOwner = 4,
+     @i_featureCreatorId = 4,
+     @i_featureStatus = 1,
+     @i_featurePriority = 1,
+     @i_featureStartDate = '2026-10-20',
+     @i_featureDueDate = '2026-11-20',
+     @o_Numero = @n OUT, @o_MensajeTecnico = @mt OUT, @o_MensajeUsuario = @mu OUT;
 
--- =============================================
--- VERIFICAR EL REGISTRO INSERTADO
--- =============================================
+SELECT 'INSERTAR' AS Prueba, @n AS Numero, @mu AS Mensaje, @mt AS Tecnico;
 
-SELECT *
-FROM SQM_GENERAL.TBL_Features;
-GO
+-- Toma el id de la feature recién insertada
+SELECT @featureId = MAX(featureId) FROM [SQM_GENERAL].[TBL_Features];
 
--- =============================================
--- PRUEBA 2: ACTUALIZAR FEATURE
--- =============================================
+-- =========== 2. ACTUALIZAR (espera 200) ===========
+EXEC [SQM_GENERAL].[USP_Features]
+     @w_Accion = 'U',
+     @i_featureId = @featureId,
+     @i_featureSummary = 'Feature actualizada',
+     @i_featureDescription = 'Descripcion modificada',
+     @i_featureAcceptanceCriteria = 'Criterios modificados',
+     @i_featureStatus = 2,
+     @i_featureDueDate = '2026-12-01',
+     @i_featureModificatorId = 4,
+     @o_Numero = @n OUT, @o_MensajeTecnico = @mt OUT, @o_MensajeUsuario = @mu OUT;
 
-EXEC SQM_GENERAL.USP_Features
-    @i_featureId = 1,
-    @i_featureSummary = 'Feature Actualizada',
-    @i_featureDescription = 'Descripcion actualizada para comprobar el UPDATE',
-    @i_featureAcceptanceCriteria = 'Los cambios deben guardarse correctamente',
-    @i_featureOwner = 2,
-    @i_featureParentLink = 3,
-    @i_featurePriority = 1,
-    @i_featureStartDate = '2026-10-14',
-    @i_featureDueDate = '2026-11-15',
-    @i_featureModificatorId = 2,
-    @i_featureStatus = 4,
-    @w_Accion = 'U';
-GO
+SELECT 'ACTUALIZAR' AS Prueba, @n AS Numero, @mu AS Mensaje, @mt AS Tecnico;
 
--- =============================================
--- VERIFICAR LA ACTUALIZACIÓN
--- =============================================
+-- Verifica que cambió (resumen, estado 2, vencimiento y fecha de modificación)
+SELECT * FROM [SQM_GENERAL].[TBL_Features] WHERE featureId = @featureId;
 
-SELECT *
-FROM SQM_GENERAL.TBL_Features
-WHERE featureId = 1;
+-- =========== 3. LISTAR (espera 200) ===========
+EXEC [SQM_GENERAL].[USP_Features]
+     @w_Accion = 'S',
+     @i_PageNumber = 1,
+     @i_RowsPerPage = 5,
+     @o_Numero = @n OUT, @o_MensajeTecnico = @mt OUT, @o_MensajeUsuario = @mu OUT;
+
+SELECT 'LISTAR' AS Prueba, @n AS Numero, @mu AS Mensaje, @mt AS Tecnico;
 GO

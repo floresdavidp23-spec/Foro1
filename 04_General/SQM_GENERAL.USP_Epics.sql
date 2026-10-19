@@ -69,26 +69,26 @@ BEGIN
             SET @o_MensajeUsuario = 'EL ESTADO ES OBLIGATORIO';
         END;
 
-        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] (NOLOCK) WHERE userId = @i_epicOwner)
+        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] WHERE userId = @i_epicOwner)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL RESPONSABLE NO EXISTE';
         END;
 
-        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] (NOLOCK) WHERE userId = @i_epicCreatorId)
+        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] WHERE userId = @i_epicCreatorId)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL CREADOR NO EXISTE';
         END;
 
-        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_CATALOGS].[TBL_Status] (NOLOCK) WHERE statusId = @i_epicStatus)
+        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_CATALOGS].[TBL_Status] WHERE statusId = @i_epicStatus)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL ESTADO NO EXISTE';
         END;
 
         ELSE IF @i_epicPriority IS NOT NULL AND
-                NOT EXISTS (SELECT 1 FROM [SQM_CATALOGS].[TBL_Priorities] (NOLOCK) WHERE priorityId = @i_epicPriority)
+                NOT EXISTS (SELECT 1 FROM [SQM_CATALOGS].[TBL_Priorities] WHERE priorityId = @i_epicPriority)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'LA PRIORIDAD NO EXISTE';
@@ -102,7 +102,7 @@ BEGIN
         END;
 
         ELSE IF @i_epicParentLink IS NOT NULL AND
-                NOT EXISTS (SELECT 1 FROM [SQM_GENERAL].[TBL_Initiatives] (NOLOCK)
+                NOT EXISTS (SELECT 1 FROM [SQM_GENERAL].[TBL_Initiatives]
                             WHERE initiativeId = @i_epicParentLink)
         BEGIN
             SET @o_Numero = 400;
@@ -171,7 +171,7 @@ BEGIN
             SET @o_MensajeUsuario = 'EL NOMBRE DE LA EPICA NO PUEDE ESTAR VACIO';
         END;
 
-        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_GENERAL].[TBL_Epics] (NOLOCK) WHERE epicId = @i_epicId)
+        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_GENERAL].[TBL_Epics] WHERE epicId = @i_epicId)
         BEGIN
             SET @o_Numero = 404;
             SET @o_MensajeUsuario = 'LA EPICA NO EXISTE';
@@ -189,28 +189,28 @@ BEGIN
             SET @o_MensajeUsuario = 'LA DESCRIPCION DE LA EPICA NO PUEDE ESTAR VACIA';
         END;
 
-        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] (NOLOCK) WHERE userId = @i_epicModificatorId)
+        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] WHERE userId = @i_epicModificatorId)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL MODIFICADOR NO EXISTE';
         END;
 
         ELSE IF @i_epicOwner IS NOT NULL AND
-                NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] (NOLOCK) WHERE userId = @i_epicOwner)
+                NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] WHERE userId = @i_epicOwner)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL RESPONSABLE NO EXISTE';
         END;
 
         ELSE IF @i_epicStatus IS NOT NULL AND
-                NOT EXISTS (SELECT 1 FROM [SQM_CATALOGS].[TBL_Status] (NOLOCK) WHERE statusId = @i_epicStatus)
+                NOT EXISTS (SELECT 1 FROM [SQM_CATALOGS].[TBL_Status] WHERE statusId = @i_epicStatus)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL ESTADO NO EXISTE';
         END;
 
         ELSE IF @i_epicPriority IS NOT NULL AND
-                NOT EXISTS (SELECT 1 FROM [SQM_CATALOGS].[TBL_Priorities] (NOLOCK) WHERE priorityId = @i_epicPriority)
+                NOT EXISTS (SELECT 1 FROM [SQM_CATALOGS].[TBL_Priorities]  WHERE priorityId = @i_epicPriority)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'LA PRIORIDAD NO EXISTE';
@@ -224,7 +224,7 @@ BEGIN
         END;
 
         ELSE IF @i_epicParentLink IS NOT NULL AND
-                NOT EXISTS (SELECT 1 FROM [SQM_GENERAL].[TBL_Initiatives] (NOLOCK)
+                NOT EXISTS (SELECT 1 FROM [SQM_GENERAL].[TBL_Initiatives] 
                             WHERE initiativeId = @i_epicParentLink)
         BEGIN
             SET @o_Numero = 400;
