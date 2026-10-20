@@ -1,5 +1,3 @@
---SQM_SECURITY.USP_Users
-
 USE DB_SCRUM_PLANNING;
 GO
 
@@ -35,7 +33,8 @@ BEGIN
     IF @i_userModificationDate IS NULL
         SET @i_userModificationDate = GETDATE();
 
-    -- INSERTAR USUARIO
+    -- INSERTAR USUARIO (ACCION 'I')
+  
     IF @w_Accion = 'I'
     BEGIN
 
@@ -61,6 +60,18 @@ BEGIN
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'LA CONTRASEÑA ES OBLIGATORIA';
+        END
+
+        ELSE IF ISNULL(@i_userRolId, 0) = 0
+        BEGIN
+            SET @o_Numero = 400;
+            SET @o_MensajeUsuario = 'EL ROL ES OBLIGATORIO';
+        END
+
+        ELSE IF ISNULL(@i_userCreatorId, 0) = 0
+        BEGIN
+            SET @o_Numero = 400;
+            SET @o_MensajeUsuario = 'EL ID DEL CREADOR ES OBLIGATORIO';
         END
 
         ELSE IF EXISTS (
@@ -91,7 +102,7 @@ BEGIN
         )
         BEGIN
             SET @o_Numero = 400;
-            SET @o_MensajeUsuario = 'EL ROL NO EXISTE';
+            SET @o_MensajeUsuario = 'EL ROL INGRESADO NO EXISTE O ESTA DESHABILITADO';
         END
 
         ELSE
@@ -101,8 +112,11 @@ BEGIN
 
             BEGIN TRY
 
-                OPEN SYMMETRIC KEY KEY_HASH
-                DECRYPTION BY CERTIFICATE CERT_SCRUMPLANNING;
+                IF NOT EXISTS (SELECT 1 FROM sys.openkeys WHERE key_name = 'KEY_HASH')
+                BEGIN
+                    OPEN SYMMETRIC KEY KEY_HASH
+                    DECRYPTION BY CERTIFICATE CERT_SCRUMPLANNING;
+                END
 
                 SET @w_userPasswordEncrypted =
                     SQM_SECURITY.Fn_EncryptByKey(@i_userPassword);
@@ -118,6 +132,8 @@ BEGIN
                     userRolId,
                     userCreationDate,
                     userCreatorId,
+                    userModificationDate,
+                    userModificatorId,
                     userEnable
                 )
                 VALUES
@@ -129,6 +145,8 @@ BEGIN
                     @i_userRolId,
                     @i_userCreationDate,
                     @i_userCreatorId,
+                    GETDATE(),
+                    NULL,
                     1
                 );
 
@@ -167,7 +185,7 @@ BEGIN
         END
     END
 
-    -- ACTUALIZAR USUARIO
+    -- ACTUALIZAR USUARIO (ACCION 'U')
     ELSE IF @w_Accion = 'U'
     BEGIN
 
@@ -226,7 +244,7 @@ BEGIN
             )
         BEGIN
             SET @o_Numero = 400;
-            SET @o_MensajeUsuario = 'EL ROL NO EXISTE';
+            SET @o_MensajeUsuario = 'EL ROL NO EXISTE O ESTA DESHABILITADO';
         END
 
         ELSE
@@ -236,17 +254,18 @@ BEGIN
 
             BEGIN TRY
 
-                IF @i_userPassword IS NOT NULL
+                IF @i_userPassword IS NOT NULL AND @i_userPassword <> ''
                 BEGIN
-
-                    OPEN SYMMETRIC KEY KEY_HASH
-                    DECRYPTION BY CERTIFICATE CERT_SCRUMPLANNING;
+                    IF NOT EXISTS (SELECT 1 FROM sys.openkeys WHERE key_name = 'KEY_HASH')
+                    BEGIN
+                        OPEN SYMMETRIC KEY KEY_HASH
+                        DECRYPTION BY CERTIFICATE CERT_SCRUMPLANNING;
+                    END
 
                     SET @w_userPasswordEncrypted =
                         SQM_SECURITY.Fn_EncryptByKey(@i_userPassword);
 
                     CLOSE SYMMETRIC KEY KEY_HASH;
-
                 END
 
                 UPDATE SQM_SECURITY.TBL_Users
@@ -298,9 +317,12 @@ BEGIN
         END
     END
 
-    -- LISTAR USUARIOS
+    -- LISTAR USUARIOS (ACCION 'S')
     ELSE IF @w_Accion = 'S'
     BEGIN
+
+        IF ISNULL(@i_PageNumber, 0) < 1 SET @i_PageNumber = 1;
+        IF ISNULL(@i_RowsPerPage, 0) < 1 SET @i_RowsPerPage = 10;
 
         BEGIN TRY
 
@@ -352,7 +374,7 @@ BEGIN
 
     END
 
-    -- ACCIÓN INVÁLIDA
+    -- ACCION INVALIDA
     ELSE
     BEGIN
 
