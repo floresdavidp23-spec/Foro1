@@ -1,5 +1,7 @@
+from typing import Any, Dict
+
 from domain.entities.ProductBacklogItemsModels import PBICreate, PBIUpdate
-from infrastructure.repositories.SqlHelper import execute_sp
+from infrastructure.repositories.SqlHelper import execute_sp, respuesta_lista
 
 
 class ProductBacklogItemsRepository:
@@ -37,5 +39,6 @@ class ProductBacklogItemsRepository:
         ))
         return {"status_code": 200, "message": "ELEMENTO DEL PRODUCT BACKLOG ACTUALIZADO CORRECTAMENTE"}
 
-    def list_pbis(self, page: int = 1, rows: int = 10) -> List[Dict[str, Any]]:
-        return execute_sp(""" EXEC [SQM_GENERAL].[USP_ProductBacklogItems] @i_PageNumber = ?, @i_RowsPerPage = ?, @w_Accion = 'S' """, (page, rows), fetch=True)
+    def list_pbis(self, page: int = 1, rows: int = 10) -> Dict[str, Any]:
+        data = execute_sp(""" EXEC [SQM_GENERAL].[USP_ProductBacklogItems] @i_PageNumber = ?, @i_RowsPerPage = ?, @w_Accion = 'S' """, (page, rows), fetch=True)
+        return respuesta_lista(data, "ELEMENTOS DEL PRODUCT BACKLOG LISTADOS CORRECTAMENTE")
