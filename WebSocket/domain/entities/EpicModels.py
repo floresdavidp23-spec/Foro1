@@ -48,4 +48,8 @@ class EpicUpdate(BaseModel):
 
 
 class LtsEpics(BaseModel):
+<<<<<<< HEAD
     epics: List[EpicBase]
+=======
+    epics: List[EpicBase]
+>>>>>>> d1b2562 (Agrega main.py y todos los routers)

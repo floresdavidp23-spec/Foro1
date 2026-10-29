@@ -147,10 +147,10 @@ BEGIN
     -- ACTUALIZAR EPICA --
     ELSE IF @w_Accion = 'U'
     BEGIN
-        -- Fechas finales (las nuevas, o las que ya estan guardadas por si no vienen)
+
         SELECT @w_startDate = COALESCE(@i_epicStartDate, epicStartDate),
-               @w_dueDate   = COALESCE(@i_epicDueDate, epicDueDate)
-        FROM [SQM_GENERAL].[TBL_Epics] (NOLOCK)
+               @w_dueDate = COALESCE(@i_epicDueDate, epicDueDate)
+        FROM [SQM_GENERAL].[TBL_Epics]
         WHERE epicId = @i_epicId;
 
         IF ISNULL(@i_epicId,0) = 0
@@ -323,9 +323,9 @@ BEGIN
         SET @o_MensajeTecnico = 'EL PROCEDIMIENTO ALMACENADO NO TIENE HABILITADA ESA OPCION';
     END
 
+    SELECT @o_Numero AS o_Numero,
+           @o_MensajeUsuario AS o_MensajeUsuario,
+           @o_MensajeTecnico AS o_MensajeTecnico;
+
 END;
 GO
-
-
-
- 

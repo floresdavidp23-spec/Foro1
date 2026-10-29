@@ -4,7 +4,7 @@ GO
 DECLARE @n INT, @mt VARCHAR(500), @mu VARCHAR(500);
 DECLARE @featureId INT;
 
--- =========== 1. INSERTAR (espera 201) ===========
+
 EXEC [SQM_GENERAL].[USP_Features]
      @w_Accion = 'I',
      @i_featureSummary = 'Feature de prueba',

@@ -1,5 +1,5 @@
 from infrastructure.database.connection import get_connection
-from domain.entities.EpicModel import EpicCreate, EpicUpdate
+from Foro1.WebSocket.domain.entities.EpicModels import EpicCreate, EpicUpdate
 
 
 class EpicRepository:

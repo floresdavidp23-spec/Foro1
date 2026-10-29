@@ -6,7 +6,7 @@ CREATE OR ALTER PROCEDURE [SQM_GENERAL].[USP_Features]
     @i_featureId INT = NULL,
     @i_featureSummary VARCHAR(500) = NULL,
     @i_featureDescription VARCHAR(2000) = NULL,
-    @i_featureAcceptanceCriteria VARCHAR(4000) = NULL,
+    @i_featuresAcceptanceCriteria VARCHAR(4000) = NULL,
     @i_featureOwner INT = NULL,
     @i_featureParentLink INT = NULL,
     @i_featurePriority INT = NULL,
@@ -325,6 +325,10 @@ BEGIN
         SET @o_MensajeUsuario = 'METODO NO HABILITADO';
         SET @o_MensajeTecnico = 'EL PROCEDIMIENTO ALMACENADO NO TIENE HABILITADA ESA OPCION';
     END
+
+    SELECT @o_Numero AS o_Numero,
+           @o_MensajeUsuario AS o_MensajeUsuario,
+           @o_MensajeTecnico AS o_MensajeTecnico
 
 END;
 GO

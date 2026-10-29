@@ -298,5 +298,10 @@ BEGIN
         SET @o_MensajeTecnico = 'EL PROCEDIMIENTO ALMACENADO NO TIENE HABILITADA ESA OPCION';
     END
 
+    SELECT @o_Numero AS o_Numero,
+           @o_MensajeUsuario AS o_MensajeUsuario,
+           @o_MensajeTecnico AS o_MensajeTecnico
+
+
 END;
 GO
