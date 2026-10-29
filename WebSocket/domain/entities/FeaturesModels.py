@@ -7,11 +7,7 @@ class FeatureBase(BaseModel):
     featureId: int
     featureSummary: str
     featureDescription: str
-<<<<<<< HEAD
-    featureAcceptanceCriteria: str
-=======
     featuresAcceptanceCriteria: str
->>>>>>> d1b2562 (Agrega main.py y todos los routers)
     featureOwner: int
     featureParentLink: int
     featurePriority: Optional[int] = None
@@ -31,11 +27,7 @@ class FeatureCreate(BaseModel):
     featureAcceptanceCriteria: str
 =======
     featuresAcceptanceCriteria: str
->>>>>>> d1b2562 (Agrega main.py y todos los routers)
-    featureOwner: int
-    featureParentLink: int
     featurePriority: Optional[int] = None
-    featureStartDate: Optional[date] = None
     featureDueDate: Optional[date] = None
     featureCreatorId: int
     featureStatus: int
