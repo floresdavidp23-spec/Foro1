@@ -34,7 +34,6 @@ class FeatureUpdate(BaseModel):
     featureId: int
     featureSummary: Optional[str] = None
     featureDescription: Optional[str] = None
-    featureAcceptanceCriteria: Optional[str] = None
     featuresAcceptanceCriteria: Optional[str] = None
     featureOwner: Optional[int] = None
     featureParentLink: Optional[int] = None
