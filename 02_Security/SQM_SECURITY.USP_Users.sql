@@ -1,4 +1,4 @@
-USE DB_SCRUM_PLANNING;
+USE [DB_SCRUM_PLANNING]
 GO
 
 CREATE OR ALTER PROC [SQM_SECURITY].[USP_Users]
@@ -14,8 +14,8 @@ CREATE OR ALTER PROC [SQM_SECURITY].[USP_Users]
     @i_userModificationDate DATETIME = NULL,
     @i_userModificatorId INT = NULL,
     @i_userEnable BIT = NULL,
-    @i_PageNumber INT = 1,
-    @i_RowsPerPage INT = 10,
+    @i_PageNumber INT = NULL,
+    @i_RowsPerPage INT = NULL,
     @w_Accion CHAR(1),
     @o_Numero INT = NULL OUT,
     @o_MensajeTecnico VARCHAR(500) = NULL OUT,
@@ -23,9 +23,9 @@ CREATE OR ALTER PROC [SQM_SECURITY].[USP_Users]
 )
 AS
 BEGIN
+    SET NOCOUNT ON;
 
-    DECLARE @w_userPasswordEncrypted VARBINARY(256),
-            @w_totalRows INT;
+    DECLARE @w_userPasswordEncrypted VARBINARY(256), @w_totalRows INT;
 
     IF @i_userCreationDate IS NULL
         SET @i_userCreationDate = GETDATE();
@@ -33,249 +33,162 @@ BEGIN
     IF @i_userModificationDate IS NULL
         SET @i_userModificationDate = GETDATE();
 
-    -- INSERTAR USUARIO (ACCION 'I')
-  
+    -- INSERTAR USUARIO --
     IF @w_Accion = 'I'
     BEGIN
-
-        IF ISNULL(@i_userFullName, '') = ''
+        IF ISNULL(@i_userFullName,'') = ''
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL NOMBRE COMPLETO ES OBLIGATORIO';
-        END
+        END;
 
-        ELSE IF ISNULL(@i_userName, '') = ''
+        ELSE IF ISNULL(@i_userName,'') = ''
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL NOMBRE DE USUARIO ES OBLIGATORIO';
-        END
+        END;
 
-        ELSE IF ISNULL(@i_userEmail, '') = ''
+        ELSE IF ISNULL(@i_userEmail,'') = ''
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL CORREO ELECTRONICO ES OBLIGATORIO';
-        END
+        END;
 
-        ELSE IF ISNULL(@i_userPassword, '') = ''
+        ELSE IF ISNULL(@i_userPassword,'') = ''
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'LA CONTRASEÑA ES OBLIGATORIA';
-        END
+        END;
 
         ELSE IF ISNULL(@i_userRolId, 0) = 0
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL ROL ES OBLIGATORIO';
-        END
+        END;
 
         ELSE IF ISNULL(@i_userCreatorId, 0) = 0
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL ID DEL CREADOR ES OBLIGATORIO';
-        END
+        END;
 
-        ELSE IF EXISTS (
-            SELECT 1
-            FROM SQM_SECURITY.TBL_Users
-            WHERE userName = @i_userName
-        )
+        ELSE IF EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] (NOLOCK) WHERE userName = @i_userName)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL NOMBRE DE USUARIO YA EXISTE';
-        END
+        END;
 
-        ELSE IF EXISTS (
-            SELECT 1
-            FROM SQM_SECURITY.TBL_Users
-            WHERE userEmail = @i_userEmail
-        )
+        ELSE IF EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] (NOLOCK) WHERE userEmail = @i_userEmail)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL CORREO YA EXISTE';
-        END
+        END;
 
-        ELSE IF NOT EXISTS (
-            SELECT 1
-            FROM SQM_SECURITY.TBL_Roles
-            WHERE rolId = @i_userRolId
-              AND rolEnable = 1
-        )
+        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Roles] (NOLOCK) WHERE rolId = @i_userRolId AND rolEnable = 1)
         BEGIN
             SET @o_Numero = 400;
-            SET @o_MensajeUsuario = 'EL ROL INGRESADO NO EXISTE O ESTA DESHABILITADO';
-        END
-
+            SET @o_MensajeUsuario = 'EL ROL NO EXISTE O ESTA DESHABILITADO';
+        END;
+        
         ELSE
         BEGIN
-
             BEGIN TRANSACTION TRX_INS_USER;
 
             BEGIN TRY
+                OPEN SYMMETRIC KEY KEY_HASH
+                DECRYPTION BY CERTIFICATE CERT_SCRUMPLANNING;
 
-                IF NOT EXISTS (SELECT 1 FROM sys.openkeys WHERE key_name = 'KEY_HASH')
-                BEGIN
-                    OPEN SYMMETRIC KEY KEY_HASH
-                    DECRYPTION BY CERTIFICATE CERT_SCRUMPLANNING;
-                END
-
-                SET @w_userPasswordEncrypted =
-                    SQM_SECURITY.Fn_EncryptByKey(@i_userPassword);
+                SET @w_userPasswordEncrypted = [SQM_SECURITY].[Fn_EncryptByKey](@i_userPassword);
 
                 CLOSE SYMMETRIC KEY KEY_HASH;
 
-                INSERT INTO SQM_SECURITY.TBL_Users
-                (
-                    userFullName,
-                    userName,
-                    userEmail,
-                    userPassword,
-                    userRolId,
-                    userCreationDate,
-                    userCreatorId,
-                    userModificationDate,
-                    userModificatorId,
-                    userEnable
+                INSERT INTO [SQM_SECURITY].[TBL_Users](
+                    userFullName, userName, userEmail, userPassword, userRolId, userCreationDate, userCreatorId, userEnable
                 )
-                VALUES
-                (
-                    @i_userFullName,
-                    @i_userName,
-                    @i_userEmail,
-                    @w_userPasswordEncrypted,
-                    @i_userRolId,
-                    @i_userCreationDate,
-                    @i_userCreatorId,
-                    GETDATE(),
-                    NULL,
-                    1
+                VALUES (
+                    @i_userFullName, @i_userName, @i_userEmail, @w_userPasswordEncrypted, @i_userRolId, @i_userCreationDate, @i_userCreatorId, 1
                 );
 
                 COMMIT TRANSACTION TRX_INS_USER;
 
                 SET @o_Numero = 201;
                 SET @o_MensajeUsuario = 'USUARIO REGISTRADO CORRECTAMENTE';
-
             END TRY
-
             BEGIN CATCH
-
                 IF @@TRANCOUNT > 0
                     ROLLBACK TRANSACTION TRX_INS_USER;
 
-                IF EXISTS (
-                    SELECT 1
-                    FROM sys.openkeys
-                    WHERE key_name = 'KEY_HASH'
-                )
+                IF EXISTS (SELECT 1 FROM sys.openkeys WHERE key_name = 'KEY_HASH')
                     CLOSE SYMMETRIC KEY KEY_HASH;
 
                 SET @o_Numero = 500;
                 SET @o_MensajeUsuario = 'ERROR AL REGISTRAR USUARIO';
-
-                SET @o_MensajeTecnico = CONCAT_WS(
-                    ' - ',
-                    'ERROR AL REGISTRAR USUARIO',
-                    ERROR_PROCEDURE(),
-                    ERROR_LINE(),
-                    ERROR_MESSAGE()
-                );
-
+                SET @o_MensajeTecnico = CONCAT_WS(' - ', 'ERROR AL REGISTRAR USUARIO', ERROR_PROCEDURE(), ERROR_LINE(), ERROR_MESSAGE());
             END CATCH
-
         END
     END
 
-    -- ACTUALIZAR USUARIO (ACCION 'U')
+    -- ACTUALIZAR USUARIO --
     ELSE IF @w_Accion = 'U'
     BEGIN
-
-        IF ISNULL(@i_userId, 0) = 0
+        IF ISNULL(@i_userId,0) = 0
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL ID DEL USUARIO ES OBLIGATORIO';
-        END
+        END;
 
-        ELSE IF ISNULL(@i_userModificatorId, 0) = 0
+        ELSE IF ISNULL(@i_userModificatorId,0) = 0
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL ID DEL MODIFICADOR ES OBLIGATORIO';
-        END
+        END;
 
-        ELSE IF NOT EXISTS (
-            SELECT 1
-            FROM SQM_SECURITY.TBL_Users
-            WHERE userId = @i_userId
-        )
+        ELSE IF NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] (NOLOCK) WHERE userId = @i_userId)
         BEGIN
             SET @o_Numero = 404;
             SET @o_MensajeUsuario = 'EL USUARIO NO EXISTE';
-        END
+        END;
 
-        ELSE IF @i_userName IS NOT NULL
-            AND EXISTS (
-                SELECT 1
-                FROM SQM_SECURITY.TBL_Users
-                WHERE userName = @i_userName
-                  AND userId <> @i_userId
-            )
+        ELSE IF @i_userName IS NOT NULL AND
+            EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] (NOLOCK) WHERE userName = @i_userName AND userId <> @i_userId)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL NOMBRE DE USUARIO YA EXISTE';
-        END
+        END;
 
-        ELSE IF @i_userEmail IS NOT NULL
-            AND EXISTS (
-                SELECT 1
-                FROM SQM_SECURITY.TBL_Users
-                WHERE userEmail = @i_userEmail
-                  AND userId <> @i_userId
-            )
+        ELSE IF @i_userEmail IS NOT NULL AND
+            EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Users] (NOLOCK) WHERE userEmail = @i_userEmail AND userId <> @i_userId)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL CORREO YA EXISTE';
-        END
+        END;
 
-        ELSE IF @i_userRolId IS NOT NULL
-            AND NOT EXISTS (
-                SELECT 1
-                FROM SQM_SECURITY.TBL_Roles
-                WHERE rolId = @i_userRolId
-                  AND rolEnable = 1
-            )
+        ELSE IF @i_userRolId IS NOT NULL AND NOT EXISTS (SELECT 1 FROM [SQM_SECURITY].[TBL_Roles] (NOLOCK) WHERE rolId = @i_userRolId AND rolEnable = 1)
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'EL ROL NO EXISTE O ESTA DESHABILITADO';
-        END
-
+        END;
+        
         ELSE
         BEGIN
-
             BEGIN TRANSACTION TRX_UPD_USER;
 
             BEGIN TRY
-
                 IF @i_userPassword IS NOT NULL AND @i_userPassword <> ''
                 BEGIN
-                    IF NOT EXISTS (SELECT 1 FROM sys.openkeys WHERE key_name = 'KEY_HASH')
-                    BEGIN
-                        OPEN SYMMETRIC KEY KEY_HASH
-                        DECRYPTION BY CERTIFICATE CERT_SCRUMPLANNING;
-                    END
+                    OPEN SYMMETRIC KEY KEY_HASH
+                    DECRYPTION BY CERTIFICATE CERT_SCRUMPLANNING;
 
-                    SET @w_userPasswordEncrypted =
-                        SQM_SECURITY.Fn_EncryptByKey(@i_userPassword);
+                    SET @w_userPasswordEncrypted = [SQM_SECURITY].[Fn_EncryptByKey](@i_userPassword);
 
                     CLOSE SYMMETRIC KEY KEY_HASH;
                 END
 
-                UPDATE SQM_SECURITY.TBL_Users
+                UPDATE [SQM_SECURITY].[TBL_Users]
                 SET userFullName = COALESCE(@i_userFullName, userFullName),
                     userName = COALESCE(@i_userName, userName),
                     userEmail = COALESCE(@i_userEmail, userEmail),
-                    userPassword = COALESCE(
-                        @w_userPasswordEncrypted,
-                        userPassword
-                    ),
+                    userPassword = COALESCE(@w_userPasswordEncrypted, userPassword),
                     userRolId = COALESCE(@i_userRolId, userRolId),
                     userModificationDate = @i_userModificationDate,
                     userModificatorId = @i_userModificatorId,
@@ -286,48 +199,68 @@ BEGIN
 
                 SET @o_Numero = 200;
                 SET @o_MensajeUsuario = 'USUARIO ACTUALIZADO CORRECTAMENTE';
-
             END TRY
-
             BEGIN CATCH
-
                 IF @@TRANCOUNT > 0
                     ROLLBACK TRANSACTION TRX_UPD_USER;
 
-                IF EXISTS (
-                    SELECT 1
-                    FROM sys.openkeys
-                    WHERE key_name = 'KEY_HASH'
-                )
+                IF EXISTS (SELECT 1 FROM sys.openkeys WHERE key_name = 'KEY_HASH')
                     CLOSE SYMMETRIC KEY KEY_HASH;
 
                 SET @o_Numero = 500;
                 SET @o_MensajeUsuario = 'ERROR AL ACTUALIZAR USUARIO';
-
-                SET @o_MensajeTecnico = CONCAT_WS(
-                    ' - ',
-                    'ERROR AL ACTUALIZAR USUARIO',
-                    ERROR_PROCEDURE(),
-                    ERROR_LINE(),
-                    ERROR_MESSAGE()
-                );
-
+                SET @o_MensajeTecnico = CONCAT_WS(' - ', 'ERROR AL ACTUALIZAR USUARIO', ERROR_PROCEDURE(), ERROR_LINE(), ERROR_MESSAGE());
             END CATCH
-
         END
     END
 
-    -- LISTAR USUARIOS (ACCION 'S')
+    -- AUTENTICAR USUARIO --
+    ELSE IF @w_Accion = 'L'
+    BEGIN
+        BEGIN TRY
+            OPEN SYMMETRIC KEY KEY_HASH
+            DECRYPTION BY CERTIFICATE CERT_SCRUMPLANNING;
+
+            SELECT userId, userName, userRolId
+            FROM [SQM_SECURITY].[TBL_Users] (NOLOCK)
+            WHERE userName = @i_userName
+                AND userEnable = 1
+                AND [SQM_SECURITY].[Fn_DecryptByKey](userPassword) = @i_userPassword;
+
+            SET @w_totalRows = @@ROWCOUNT;
+
+            IF @w_totalRows > 0
+            BEGIN
+                SET @o_Numero = 200;
+                SET @o_MensajeUsuario = 'AUTENTICACION CORRECTA';
+            END
+            ELSE
+            BEGIN
+                SET @o_Numero = 401;
+                SET @o_MensajeUsuario = 'USUARIO O CONTRASEÑA INCORRECTOS';
+            END;
+
+            CLOSE SYMMETRIC KEY KEY_HASH;
+        END TRY
+        BEGIN CATCH
+            IF EXISTS (SELECT 1 FROM sys.openkeys WHERE key_name = 'KEY_HASH')
+                CLOSE SYMMETRIC KEY KEY_HASH;
+
+            SET @o_Numero = 500;
+            SET @o_MensajeUsuario = 'NO FUE POSIBLE AUTENTICAR AL USUARIO';
+            SET @o_MensajeTecnico = CONCAT_WS(' - ', ERROR_PROCEDURE(), ERROR_LINE(), ERROR_MESSAGE());
+        END CATCH
+    END
+
+    -- LISTAR USUARIOS --
     ELSE IF @w_Accion = 'S'
     BEGIN
-
         IF ISNULL(@i_PageNumber, 0) < 1 SET @i_PageNumber = 1;
         IF ISNULL(@i_RowsPerPage, 0) < 1 SET @i_RowsPerPage = 10;
 
         BEGIN TRY
-
-            SELECT
-                userId,
+            SELECT 
+                userId, 
                 userFullName,
                 userName,
                 userEmail,
@@ -337,14 +270,14 @@ BEGIN
                 userModificationDate,
                 userModificatorId,
                 userEnable
-            FROM SQM_SECURITY.TBL_Users
+            FROM [SQM_SECURITY].[TBL_Users] (NOLOCK)
             ORDER BY userId
             OFFSET (@i_PageNumber - 1) * @i_RowsPerPage ROWS
             FETCH NEXT @i_RowsPerPage ROWS ONLY;
 
             SET @w_totalRows = @@ROWCOUNT;
 
-            IF @w_totalRows > 0
+            IF (@w_totalRows > 0)
             BEGIN
                 SET @o_Numero = 200;
                 SET @o_MensajeUsuario = 'USUARIOS LISTADOS CORRECTAMENTE';
@@ -354,36 +287,25 @@ BEGIN
                 SET @o_Numero = 204;
                 SET @o_MensajeUsuario = 'NO HAY MAS REGISTROS PARA LISTAR';
             END
-
         END TRY
-
         BEGIN CATCH
-
             SET @o_Numero = 500;
             SET @o_MensajeUsuario = 'ERROR AL LISTAR LOS USUARIOS';
-
-            SET @o_MensajeTecnico = CONCAT_WS(
-                ' - ',
-                'ERROR AL LISTAR USUARIOS',
-                ERROR_PROCEDURE(),
-                ERROR_LINE(),
-                ERROR_MESSAGE()
-            );
-
+            SET @o_MensajeTecnico = CONCAT_WS(' - ', 'ERROR AL LISTAR USUARIOS', ERROR_PROCEDURE(), ERROR_LINE(), ERROR_MESSAGE());
         END CATCH
-
     END
 
-    -- ACCION INVALIDA
+    -- ACCION INVALIDA --
     ELSE
     BEGIN
-
         SET @o_Numero = 405;
         SET @o_MensajeUsuario = 'METODO NO HABILITADO';
-        SET @o_MensajeTecnico =
-            'EL PROCEDIMIENTO ALMACENADO NO TIENE HABILITADA ESA OPCION';
-
+        SET @o_MensajeTecnico = 'EL PROCEDIMIENTO ALMACENADO NO TIENE HABILITADA ESA OPCION';
     END
 
+    SELECT
+        @o_Numero AS status_code,
+        @o_MensajeUsuario AS message_user,
+        @o_MensajeTecnico AS message_tech;
 END;
 GO
