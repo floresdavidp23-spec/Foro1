@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from Foro1.WebSocket.domain.entities.InitiativeModels import InitiativeCreate, InitiativeUpdate
-from infrastructure.repositories.IntiativeRepository import InitiativeRepository
+from Foro1.WebSocket.infrastructure.repositories.InitiativeRepository import InitiativeRepository
 
 router = APIRouter(prefix="/initiatives", tags=["Initiatives"])
 repository = InitiativeRepository()

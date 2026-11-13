@@ -45,7 +45,7 @@ BEGIN
             SET @o_MensajeUsuario = 'LA DESCRIPCION DE LA FEATURE ES OBLIGATORIA';
         END;
 
-        ELSE IF ISNULL(@i_featureAcceptanceCriteria,'') = ''
+        ELSE IF ISNULL(@i_featuresAcceptanceCriteria,'') = ''
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'LOS CRITERIOS DE ACEPTACION SON OBLIGATORIOS';
@@ -124,7 +124,7 @@ BEGIN
                  featureOwner, featureStartDate, featureDueDate, featurePriority,
                  featureCreationDate, featureCreatorId, featureStatus)
                 VALUES
-                (@i_featureSummary, @i_featureDescription, @i_featureAcceptanceCriteria, @i_featureParentLink,
+                (@i_featureSummary, @i_featureDescription, @i_featuresAcceptanceCriteria, @i_featureParentLink,
                  @i_featureOwner, @i_featureStartDate, @i_featureDueDate, @i_featurePriority,
                  GETDATE(), @i_featureCreatorId, @i_featureStatus);
 
@@ -181,7 +181,7 @@ BEGIN
             SET @o_MensajeUsuario = 'LA DESCRIPCION DE LA FEATURE NO PUEDE ESTAR VACIA';
         END;
 
-        ELSE IF @i_featureAcceptanceCriteria IS NOT NULL AND @i_featureAcceptanceCriteria = ''
+        ELSE IF @i_featuresAcceptanceCriteria IS NOT NULL AND @i_featuresAcceptanceCriteria = ''
         BEGIN
             SET @o_Numero = 400;
             SET @o_MensajeUsuario = 'LOS CRITERIOS DE ACEPTACION NO PUEDEN ESTAR VACIOS';
@@ -243,7 +243,7 @@ BEGIN
                 UPDATE [SQM_GENERAL].[TBL_Features]
                 SET featureSummary = COALESCE(@i_featureSummary, featureSummary),
                     featureDescription = COALESCE(@i_featureDescription, featureDescription),
-                    featuresAcceptanceCriteria = COALESCE(@i_featureAcceptanceCriteria, featuresAcceptanceCriteria),
+                    featuresAcceptanceCriteria = COALESCE(@i_featuresAcceptanceCriteria, featuresAcceptanceCriteria),
                     featureParentLink = COALESCE(@i_featureParentLink, featureParentLink),
                     featureOwner = COALESCE(@i_featureOwner, featureOwner),
                     featureStartDate = COALESCE(@i_featureStartDate, featureStartDate),
@@ -326,9 +326,9 @@ BEGIN
         SET @o_MensajeTecnico = 'EL PROCEDIMIENTO ALMACENADO NO TIENE HABILITADA ESA OPCION';
     END
 
-    SELECT @o_Numero AS o_Numero,
-           @o_MensajeUsuario AS o_MensajeUsuario,
-           @o_MensajeTecnico AS o_MensajeTecnico
+    SELECT @o_Numero AS status_code,
+           @o_MensajeUsuario AS message_user,
+           @o_MensajeTecnico AS message_tech;
 
 END;
 GO

@@ -1,19 +1,23 @@
-from infrastructure.database.connection import get_connection
-from Foro1.WebSocket.domain.entities.FeaturesModels import FeatureCreate, FeatureUpdate
+from domain.entities.FeaturesModels import FeatureCreate, FeatureUpdate
+from domain.interfaces.IFeaturesRepository import IFeatureRepository
+from domain.shared.operationResult import OperationResult
+from domain.shared.queryResult import QueryResult
+
+from infrastructure.database.base_repository import BaseRepository
 
 
-class FeatureRepository:
+class FeatureRepository(BaseRepository, IFeatureRepository):
+    SP_NAME = "[SQM_GENERAL].[USP_Features]"
 
-    def insert_feature(self, feature: FeatureCreate):
-        conn = get_connection()
-        cursor = conn.cursor()
+    def insert_feature(
+        self,
+        feature: FeatureCreate,
+        creator_id: int
+    ) -> OperationResult:
 
-        o_Numero = 0
-        o_MensajeTecnico = ""
-        o_MensajeUsuario = ""
-
-        cursor.execute("""
-            EXEC [SQM_GENERAL].[USP_Features]
+        return self.execute_operation(
+            f"""
+            EXEC {self.SP_NAME}
                 @i_featureSummary = ?,
                 @i_featureDescription = ?,
                 @i_featuresAcceptanceCriteria = ?,
@@ -24,48 +28,31 @@ class FeatureRepository:
                 @i_featureDueDate = ?,
                 @i_featureCreatorId = ?,
                 @i_featureStatus = ?,
-                @w_Accion = 'I',
-                @o_Numero = ? OUTPUT,
-                @o_MensajeTecnico = ? OUTPUT,
-                @o_MensajeUsuario = ? OUTPUT
-        """, (
-            feature.featureSummary,
-            feature.featureDescription,
-            feature.featuresAcceptanceCriteria,
-            feature.featureOwner,
-            feature.featureParentLink,
-            feature.featurePriority,
-            feature.featureStartDate,
-            feature.featureDueDate,
-            feature.featureCreatorId,
-            feature.featureStatus,
-            o_Numero,
-            o_MensajeTecnico,
-            o_MensajeUsuario
-        ))
+                @w_Accion = 'I'
+            """,
+            (
+                feature.featureSummary,
+                feature.featureDescription,
+                feature.featuresAcceptanceCriteria,
+                feature.featureOwner,
+                feature.featureParentLink,
+                feature.featurePriority,
+                feature.featureStartDate,
+                feature.featureDueDate,
+                creator_id,
+                feature.featureStatus
+            )
+        )
 
-        result = cursor.fetchone()
+    def update_feature(
+        self,
+        feature: FeatureUpdate,
+        modificator_id: int
+    ) -> OperationResult:
 
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return {
-            "status_code": result[0] if result else o_Numero,
-            "message": result[1] if result else o_MensajeUsuario
-        }
-
-
-    def update_feature(self, feature: FeatureUpdate):
-        conn = get_connection()
-        cursor = conn.cursor()
-
-        o_Numero = 0
-        o_MensajeTecnico = ""
-        o_MensajeUsuario = ""
-
-        cursor.execute("""
-            EXEC [SQM_GENERAL].[USP_Features]
+        return self.execute_operation(
+            f"""
+            EXEC {self.SP_NAME}
                 @i_featureId = ?,
                 @i_featureSummary = ?,
                 @i_featureDescription = ?,
@@ -77,71 +64,38 @@ class FeatureRepository:
                 @i_featureDueDate = ?,
                 @i_featureModificatorId = ?,
                 @i_featureStatus = ?,
-                @w_Accion = 'U',
-                @o_Numero = ? OUTPUT,
-                @o_MensajeTecnico = ? OUTPUT,
-                @o_MensajeUsuario = ? OUTPUT
-        """, (
-            feature.featureId,
-            feature.featureSummary,
-            feature.featureDescription,
-            feature.featuresAcceptanceCriteria,
-            feature.featureOwner,
-            feature.featureParentLink,
-            feature.featurePriority,
-            feature.featureStartDate,
-            feature.featureDueDate,
-            feature.featureModificatorId,
-            feature.featureStatus,
-            o_Numero,
-            o_MensajeTecnico,
-            o_MensajeUsuario
-        ))
+                @w_Accion = 'U'
+            """,
+            (
+                feature.featureId,
+                feature.featureSummary,
+                feature.featureDescription,
+                feature.featuresAcceptanceCriteria,
+                feature.featureOwner,
+                feature.featureParentLink,
+                feature.featurePriority,
+                feature.featureStartDate,
+                feature.featureDueDate,
+                modificator_id,
+                feature.featureStatus
+            )
+        )
 
-        result = cursor.fetchone()
+    def list_features(
+        self,
+        page_number: int = 1,
+        rows_per_page: int = 10
+    ) -> QueryResult:
 
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return {
-            "status_code": result[0] if result else o_Numero,
-            "message": result[1] if result else o_MensajeUsuario
-        }
-
-
-    def list_features(self):
-        """
-        Lista todas las features (Acción 'S').
-        """
-        conn = get_connection()
-        cursor = conn.cursor()
-
-        o_Numero = 0
-        o_MensajeTecnico = ""
-        o_MensajeUsuario = ""
-
-        cursor.execute("""
-            EXEC [SQM_GENERAL].[USP_Features]
-                @w_Accion = 'S',
-                @o_Numero = ? OUTPUT,
-                @o_MensajeTecnico = ? OUTPUT,
-                @o_MensajeUsuario = ? OUTPUT
-        """, (
-            o_Numero,
-            o_MensajeTecnico,
-            o_MensajeUsuario
-        ))
-
-        columns = [col[0] for col in cursor.description]
-        data = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return {
-            "status_code": o_Numero,
-            "message": o_MensajeUsuario,
-            "data": data
-        }
+        return self.execute_query(
+            f"""
+            EXEC {self.SP_NAME}
+                @i_PageNumber = ?,
+                @i_RowsPerPage = ?,
+                @w_Accion = 'S'
+            """,
+            (
+                page_number,
+                rows_per_page
+            )
+        )

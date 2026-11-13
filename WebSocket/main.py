@@ -1,8 +1,14 @@
 from fastapi import FastAPI
 
-from api.routers import ( epics,features,initiatives,activity_types,business_values,priorities,roles,status,users,)
+from presentation.controllers.api.routers import ( epics,features,initiatives,activity_types,business_values,priorities,roles,status,users,)
+from presentation.controllers.epics_controller import router as epics_router
+from presentation.controllers.features_controller import router as features_router
+from presentation.controllers.initiatives_controller import router as initiatives_router
 
-app = FastAPI(title="Foro 1 - DB_SCRUM_PLANNING")
+app = FastAPI(
+    title="Foro 1 - DB_SCRUM_PLANNING",
+    version="1.0.0"
+    )
 
 app.include_router(epics.router)
 app.include_router(features.router)

@@ -1,19 +1,23 @@
-from infrastructure.database.connection import get_connection
-from Foro1.WebSocket.domain.entities.EpicModels import EpicCreate, EpicUpdate
+from domain.entities.EpicModels import EpicCreate, EpicUpdate
+from domain.interfaces.IepicsRepository import IEpicRepository
+from domain.shared.operationResult import OperationResult
+from domain.shared.queryResult import QueryResult
+
+from infrastructure.database.base_repository import BaseRepository
 
 
-class EpicRepository:
+class EpicRepository(BaseRepository, IEpicRepository):
+    SP_NAME = "[SQM_GENERAL].[USP_Epics]"
 
-    def insert_epic(self, epic: EpicCreate):
-        conn = get_connection()
-        cursor = conn.cursor()
+    def insert_epic(
+        self,
+        epic: EpicCreate,
+        creator_id: int
+    ) -> OperationResult:
 
-        o_Numero = 0
-        o_MensajeTecnico = ""
-        o_MensajeUsuario = ""
-
-        cursor.execute("""
-            EXEC [SQM_GENERAL].[USP_Epics]
+        return self.execute_operation(
+            f"""
+            EXEC {self.SP_NAME}
                 @i_epicName = ?,
                 @i_epicSummary = ?,
                 @i_epicDescription = ?,
@@ -24,47 +28,31 @@ class EpicRepository:
                 @i_epicDueDate = ?,
                 @i_epicCreatorId = ?,
                 @i_epicStatus = ?,
-                @w_Accion = 'I',
-                @o_Numero = ? OUTPUT,
-                @o_MensajeTecnico = ? OUTPUT,
-                @o_MensajeUsuario = ? OUTPUT
-        """, (
-            epic.epicName,
-            epic.epicSummary,
-            epic.epicDescription,
-            epic.epicOwner,
-            epic.epicParentLink,
-            epic.epicPriority,
-            epic.epicStartDate,
-            epic.epicDueDate,
-            epic.epicCreatorId,
-            epic.epicStatus,
-            o_Numero,
-            o_MensajeTecnico,
-            o_MensajeUsuario
-        ))
+                @w_Accion = 'I'
+            """,
+            (
+                epic.epicName,
+                epic.epicSummary,
+                epic.epicDescription,
+                epic.epicOwner,
+                epic.epicParentLink,
+                epic.epicPriority,
+                epic.epicStartDate,
+                epic.epicDueDate,
+                creator_id,
+                epic.epicStatus
+            )
+        )
 
-        result = cursor.fetchone()
+    def update_epic(
+        self,
+        epic: EpicUpdate,
+        modificator_id: int
+    ) -> OperationResult:
 
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return {
-            "status_code": result[0] if result else o_Numero,
-            "message": result[1] if result else o_MensajeUsuario
-        }
-
-    def update_epic(self, epic: EpicUpdate):
-        conn = get_connection()
-        cursor = conn.cursor()
-
-        o_Numero = 0
-        o_MensajeTecnico = ""
-        o_MensajeUsuario = ""
-
-        cursor.execute("""
-            EXEC [SQM_GENERAL].[USP_Epics]
+        return self.execute_operation(
+            f"""
+            EXEC {self.SP_NAME}
                 @i_epicId = ?,
                 @i_epicName = ?,
                 @i_epicSummary = ?,
@@ -76,70 +64,38 @@ class EpicRepository:
                 @i_epicDueDate = ?,
                 @i_epicModificatorId = ?,
                 @i_epicStatus = ?,
-                @w_Accion = 'U',
-                @o_Numero = ? OUTPUT,
-                @o_MensajeTecnico = ? OUTPUT,
-                @o_MensajeUsuario = ? OUTPUT
-        """, (
-            epic.epicId,
-            epic.epicName,
-            epic.epicSummary,
-            epic.epicDescription,
-            epic.epicOwner,
-            epic.epicParentLink,
-            epic.epicPriority,
-            epic.epicStartDate,
-            epic.epicDueDate,
-            epic.epicModificatorId,
-            epic.epicStatus,
-            o_Numero,
-            o_MensajeTecnico,
-            o_MensajeUsuario
-        ))
+                @w_Accion = 'U'
+            """,
+            (
+                epic.epicId,
+                epic.epicName,
+                epic.epicSummary,
+                epic.epicDescription,
+                epic.epicOwner,
+                epic.epicParentLink,
+                epic.epicPriority,
+                epic.epicStartDate,
+                epic.epicDueDate,
+                modificator_id,
+                epic.epicStatus
+            )
+        )
 
-        result = cursor.fetchone()
+    def list_epics(
+        self,
+        page_number: int = 1,
+        rows_per_page: int = 10
+    ) -> QueryResult:
 
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return {
-            "status_code": result[0] if result else o_Numero,
-            "message": result[1] if result else o_MensajeUsuario
-        }
-
-    def list_epics(self):
-        """
-        Lista todas las épicas (Acción 'S').
-        """
-        conn = get_connection()
-        cursor = conn.cursor()
-
-        o_Numero = 0
-        o_MensajeTecnico = ""
-        o_MensajeUsuario = ""
-
-        cursor.execute("""
-            EXEC [SQM_GENERAL].[USP_Epics]
-                @w_Accion = 'S',
-                @o_Numero = ? OUTPUT,
-                @o_MensajeTecnico = ? OUTPUT,
-                @o_MensajeUsuario = ? OUTPUT
-        """, (
-            o_Numero,
-            o_MensajeTecnico,
-            o_MensajeUsuario
-        ))
-
-        columns = [col[0] for col in cursor.description]
-        data = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-        conn.commit()
-        cursor.close()
-        conn.close()
-
-        return {
-            "status_code": o_Numero,
-            "message": o_MensajeUsuario,
-            "data": data
-        }
+        return self.execute_query(
+            f"""
+            EXEC {self.SP_NAME}
+                @i_PageNumber = ?,
+                @i_RowsPerPage = ?,
+                @w_Accion = 'S'
+            """,
+            (
+                page_number,
+                rows_per_page
+            )
+        )
