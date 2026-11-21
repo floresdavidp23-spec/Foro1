@@ -4,6 +4,9 @@ from presentation.controllers.api.routers import ( epics,features,initiatives,ac
 from presentation.controllers.epics_controller import router as epics_router
 from presentation.controllers.features_controller import router as features_router
 from presentation.controllers.initiatives_controller import router as initiatives_router
+from presentation.controllers.roles_controller import router as roles_router
+from presentation.controllers.status_controller import router as status_router
+from presentation.controllers.users_controller import router as users_router
 
 app = FastAPI(
     title="Foro 1 - DB_SCRUM_PLANNING",
