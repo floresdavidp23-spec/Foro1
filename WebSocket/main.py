@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from presentation.controllers.activity_types_controller import router as activity_types_router
 from presentation.controllers.business_values_controller import router as business_values_router
@@ -16,6 +17,17 @@ from presentation.controllers.users_controller import router as users_router
 app = FastAPI(
     title="Foro 1 - DB_SCRUM_PLANNING",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(users_router)

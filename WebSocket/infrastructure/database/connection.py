@@ -5,6 +5,7 @@ def get_connection():
         "DRIVER={ODBC Driver 17 for SQL Server};"
         "SERVER=localhost;"
         "DATABASE=DB_SCRUM_PLANNING;"
-        "UID=WebSocket;"
-        "PWD=12345678;"
+        "Trusted_Connection=yes;"
     )
+
+get_db_connection = get_connection

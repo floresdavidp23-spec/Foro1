@@ -3,7 +3,7 @@ from infrastructure.database.connection import get_db_connection
 
 class BusinessValuesRepository:
 
-@staticmethod
+    @staticmethod
     def execute_usp_business_values(
         accion: str,
         business_value_id: Optional[int] = None,

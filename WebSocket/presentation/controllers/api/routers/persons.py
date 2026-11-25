@@ -1,4 +1,4 @@
-endPoint de persons.py
+# endPoint de persons.py
 
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse

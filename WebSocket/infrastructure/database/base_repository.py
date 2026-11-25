@@ -49,25 +49,48 @@ class BaseRepository:
             with get_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(query, params)
+
+                # Saltar resultados intermedios sin columnas (ej. mensajes o conteos de filas afectadas en el SP)
+                while cursor.description is None:
+                    if not cursor.nextset():
+                        return QueryResult(
+                            status_code=500,
+                            message_user="El procedimiento no retornó datos.",
+                            message_tech="cursor.description fue None en todos los resultsets.",
+                            data=[]
+                        )
+
                 columns = [col[0] for col in cursor.description]
                 data = [
                     dict(zip(columns, row))
                     for row in cursor.fetchall()
                 ]
 
-                if cursor.nextset():
-                    operation = cursor.fetchone()
+                # Buscar el siguiente resultset con el estado (status_code, message_user, message_tech)
+                while cursor.nextset():
+                    if cursor.description is not None:
+                        operation = cursor.fetchone()
+                        if operation:
+                            return QueryResult(
+                                status_code=operation[0],
+                                message_user=operation[1],
+                                message_tech=operation[2],
+                                data=data
+                            )
+
+                # Si el SP devolvió un solo SELECT que ya trae status_code y message_user en la fila:
+                if data and "status_code" in data[0]:
                     return QueryResult(
-                        status_code=operation[0],
-                        message_user=operation[1],
-                        message_tech=operation[2],
+                        status_code=data[0]["status_code"],
+                        message_user=data[0].get("message_user", "Operación exitosa"),
+                        message_tech=data[0].get("message_tech"),
                         data=data
                     )
 
                 return QueryResult(
-                    status_code=500,
-                    message_user="No se recibieron parámetros de salida.",
-                    message_tech="El procedimiento no retornó un segundo resultset.",
+                    status_code=200 if data else 401,
+                    message_user="Consulta exitosa." if data else "Credenciales incorrectas o sin datos.",
+                    message_tech="El procedimiento retornó un único resultset.",
                     data=data
                 )
 
@@ -79,3 +102,4 @@ class BaseRepository:
                 message_tech=None,
                 data=[]
             )
+    

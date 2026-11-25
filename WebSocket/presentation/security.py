@@ -100,3 +100,6 @@ def get_admin_user(
             detail="No tienes permisos para esta operación."
         )
     return current_user
+
+CurrentUserDep = Annotated[dict[str, int | str], Depends(get_current_user)]
+AdminUserDep = Annotated[dict[str, int | str], Depends(get_admin_user)]

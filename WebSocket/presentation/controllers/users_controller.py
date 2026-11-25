@@ -25,16 +25,24 @@ def login(
     if result.status_code >= 400:
         raise HTTPException(
             status_code=result.status_code,
-            detail=result.message
+            detail=result.message_user
         )
 
-    user_data = result.data[0] if isinstance(result.data, list) and result.data else result.data
-    user_id = user_data.get("UserID") or user_data.get("id")
-    access_token = create_access_token(data={"sub": str(user_id)})
+    user_data = result.data[0] if isinstance(result.data, list) and result.data else (result.data or {})
+    user_id = int(user_data.get("UserID") or user_data.get("userId") or user_data.get("id") or 0)
+    user_name = str(user_data.get("UserName") or user_data.get("userName") or user_data.get("userFullName") or user.userName)
+    role_id = int(user_data.get("UserRolId") or user_data.get("userRolId") or user_data.get("role_id") or 1)
+
+    access_token = create_access_token(
+        user_id=user_id,
+        user_name=user_name,
+        role_id=role_id
+    )
 
     return TokenResponse(
         access_token=access_token,
-        token_type="bearer"
+        token_type="bearer",
+        message_user=result.message_user
     )
 
 
@@ -49,12 +57,12 @@ def create_user(
     if result.status_code >= 400:
         raise HTTPException(
             status_code=result.status_code,
-            detail=result.message
+            detail=result.message_user
         )
 
     return OperationResponse(
         status_code=result.status_code,
-        message=result.message
+        message_user=result.message_user
     )
 
 
@@ -69,12 +77,12 @@ def update_user(
     if result.status_code >= 400:
         raise HTTPException(
             status_code=result.status_code,
-            detail=result.message
+            detail=result.message_user
         )
 
     return OperationResponse(
         status_code=result.status_code,
-        message=result.message
+        message_user=result.message_user
     )
 
 
@@ -92,11 +100,11 @@ def list_users(
     if result.status_code >= 400:
         raise HTTPException(
             status_code=result.status_code,
-            detail=result.message
+            detail=result.message_user
         )
 
     return QueryResponse(
         status_code=result.status_code,
-        message=result.message,
+        message_user=result.message_user,
         data=result.data
     )

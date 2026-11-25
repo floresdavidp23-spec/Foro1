@@ -1,4 +1,4 @@
-endpoint user_profiles.py
+# user_profiles.py
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse

@@ -3,7 +3,7 @@ from infrastructure.database.connection import get_db_connection
 
 class PrioritiesRepository:
 
-@staticmethod
+    @staticmethod
     def execute_usp_priorities(
         accion: str,
         priority_id: Optional[int] = None,
@@ -19,7 +19,7 @@ class PrioritiesRepository:
         cursor = conn.cursor()
         records = []
         
-        sql = 
+        sql = """
             DECLARE @o_Numero INT, @o_MensajeTecnico VARCHAR(500), @o_MensajeUsuario VARCHAR(500);
             EXEC SQM_CATALOGS.USP_Priorities
                 @i_priorityId = ?,
@@ -34,7 +34,7 @@ class PrioritiesRepository:
                 @o_MensajeTecnico = @o_MensajeTecnico OUTPUT,
                 @o_MensajeUsuario = @o_MensajeUsuario OUTPUT;
             SELECT @o_Numero AS o_Numero, @o_MensajeUsuario AS o_MensajeUsuario, @o_MensajeTecnico AS o_MensajeTecnico;
-        
+        """
         
         cursor.execute(sql, (
             priority_id, priority_name, creator_id,
