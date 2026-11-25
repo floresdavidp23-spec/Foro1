@@ -23,12 +23,12 @@ def create_role(
     if result.status_code >= 400:
         raise HTTPException(
             status_code=result.status_code,
-            detail=result.message
+            detail=result.message_user
         )
 
     return OperationResponse(
         status_code=result.status_code,
-        message=result.message
+        message=result.message_user
     )
 
 
@@ -43,12 +43,12 @@ def update_role(
     if result.status_code >= 400:
         raise HTTPException(
             status_code=result.status_code,
-            detail=result.message
+            detail=result.message_user
         )
 
     return OperationResponse(
         status_code=result.status_code,
-        message=result.message
+        message=result.message_user
     )
 
 
@@ -66,11 +66,11 @@ def list_roles(
     if result.status_code >= 400:
         raise HTTPException(
             status_code=result.status_code,
-            detail=result.message
+            detail=result.message_user
         )
 
     return QueryResponse(
         status_code=result.status_code,
-        message=result.message,
+        message=result.message_user,
         data=result.data
     )

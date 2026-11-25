@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 
-from WebSocket.application.use_cases.UsersUseCases import UserUseCase
+from application.use_cases.UsersUseCases import UserUseCase
 from domain.entities.UserModels import UserCreate, UserLogin, UserUpdate
 from presentation.dependencies.dependencies import get_user_use_case
 from presentation.security import CurrentUserDep, create_access_token
