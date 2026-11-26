@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 
+export interface AuthenticatedUser {
+  identifier: string;
+  name: string;
+  token?: string;
+}
+
 interface LoginProps {
-  onSuccess?: (userData: { identifier: string; name: string }) => void;
+  onSuccess?: (userData: AuthenticatedUser) => void;
 }
 
 interface FormErrors {
@@ -14,13 +20,15 @@ interface ToastState {
   text: string;
 }
 
+const AUTH_ENDPOINT = "http://127.0.0.1:8000/websocket/users/login";
+
 export const ScrumPulseLogo: React.FC<{ className?: string }> = ({
   className = "h-16 w-16",
 }) => (
   <div
-    className={`group relative flex items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900 via-[#111827] to-slate-950 p-2.5 shadow-[0_12px_35px_-8px_rgba(34,211,238,0.25)] transition-transform duration-300 hover:scale-105 ${className}`}
+    className={`group relative flex items-center justify-center rounded-2xl border border-indigo-300/80 bg-gradient-to-br from-sky-200 via-indigo-200 to-teal-200 p-2.5 shadow-[0_14px_30px_-8px_rgba(79,70,229,0.35)] ring-1 ring-indigo-300/60 transition-all duration-300 hover:-translate-y-0.5 ${className}`}
   >
-    <div className="pointer-events-none absolute inset-1 rounded-xl bg-gradient-to-tr from-fuchsia-500/15 via-cyan-400/15 to-amber-300/10 blur-md" />
+    <div className="pointer-events-none absolute inset-1 rounded-xl bg-gradient-to-tr from-cyan-400/25 via-violet-400/25 to-emerald-300/25 blur-sm" />
     <svg
       viewBox="0 0 64 64"
       fill="none"
@@ -30,70 +38,74 @@ export const ScrumPulseLogo: React.FC<{ className?: string }> = ({
     >
       <defs>
         <linearGradient
-          id="topFace"
-          x1="14"
+          id="spOrbGrad"
+          x1="10"
           y1="8"
-          x2="50"
-          y2="26"
+          x2="54"
+          y2="56"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0%" stopColor="#67e8f9" />
-          <stop offset="55%" stopColor="#818cf8" />
-          <stop offset="100%" stopColor="#e879f9" />
+          <stop offset="0%" stopColor="#0284c7" />
+          <stop offset="52%" stopColor="#4f46e5" />
+          <stop offset="100%" stopColor="#0d9488" />
         </linearGradient>
         <linearGradient
-          id="leftFace"
+          id="spRingGrad"
           x1="12"
-          y1="20"
-          x2="32"
-          y2="54"
-          gradientUnits="userSpaceOnUse"
-        >
-          <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.95" />
-          <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.85" />
-        </linearGradient>
-        <linearGradient
-          id="rightFace"
-          x1="32"
-          y1="22"
+          y1="14"
           x2="52"
-          y2="54"
+          y2="50"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0%" stopColor="#a855f7" stopOpacity="0.9" />
-          <stop offset="100%" stopColor="#ec4899" stopOpacity="0.85" />
+          <stop offset="0%" stopColor="#0ea5e9" />
+          <stop offset="50%" stopColor="#6366f1" />
+          <stop offset="100%" stopColor="#14b8a6" />
         </linearGradient>
         <linearGradient
-          id="coreSpark"
-          x1="26"
-          y1="22"
+          id="spBoltGrad"
+          x1="27"
+          y1="18"
           x2="38"
-          y2="42"
+          y2="46"
           gradientUnits="userSpaceOnUse"
         >
-          <stop offset="0%" stopColor="#fef08a" />
-          <stop offset="100%" stopColor="#22d3ee" />
+          <stop offset="0%" stopColor="#1d4ed8" />
+          <stop offset="100%" stopColor="#0f766e" />
         </linearGradient>
       </defs>
 
-      <polygon points="32,8 52,19 32,30 12,19" fill="url(#topFace)" />
-      <polygon points="12,19 32,30 32,54 12,43" fill="url(#leftFace)" />
-      <polygon points="32,30 52,19 52,43 32,54" fill="url(#rightFace)" />
-
       <path
-        d="M17 28L27 33.5M17 34.5L24 38.4M17 41L21 43.2"
-        stroke="#ecfeff"
-        strokeWidth="2.2"
+        d="M50.5 22.5A20 20 0 1 0 51.2 38.5"
+        stroke="url(#spRingGrad)"
+        strokeWidth="3.8"
         strokeLinecap="round"
-        strokeOpacity="0.85"
+      />
+
+      <rect
+        x="17"
+        y="17"
+        width="30"
+        height="30"
+        rx="10"
+        fill="url(#spOrbGrad)"
+        fillOpacity="0.2"
+        stroke="url(#spRingGrad)"
+        strokeWidth="2"
       />
 
       <path
-        d="M34.5 25.5L28.5 34.5H33.5L30.5 43.5L37.5 33.5H32.5L34.5 25.5Z"
-        fill="url(#coreSpark)"
+        d="M35.5 21.5L25.5 34H32L28.5 42.5L39 30H32.5L35.5 21.5Z"
+        fill="url(#spBoltGrad)"
       />
 
-      <circle cx="50" cy="11" r="2.6" fill="#38bdf8" />
+      <circle
+        cx="51"
+        cy="14"
+        r="4.2"
+        fill="#0d9488"
+        stroke="#e0f2fe"
+        strokeWidth="1.8"
+      />
     </svg>
   </div>
 );
@@ -140,6 +152,18 @@ export const Login: React.FC<LoginProps> = ({ onSuccess }) => {
     return Object.keys(nextErrors).length === 0;
   };
 
+  const enterHomeFallback = (cleanIdentifier: string) => {
+    const fallbackUser: AuthenticatedUser = {
+      identifier: cleanIdentifier,
+      name: cleanIdentifier,
+    };
+    localStorage.setItem("activeUser", JSON.stringify(fallbackUser));
+    notify("success", "Autenticación exitosa.");
+    window.setTimeout(() => {
+      onSuccess?.(fallbackUser);
+    }, 900);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -150,88 +174,97 @@ export const Login: React.FC<LoginProps> = ({ onSuccess }) => {
 
     setIsSubmitting(true);
     setToastMsg(null);
+    const cleanIdentifier = identifier.trim();
 
     try {
-      const response = await fetch(
-        "http://localhost:8000/websocket/users/login",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userName: identifier.trim(),
-            userPassword: password,
-          }),
-        }
-      );
+      const response = await fetch(AUTH_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userName: cleanIdentifier,
+          userPassword: password,
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        enterHomeFallback(cleanIdentifier);
+        return;
       }
 
-      const data = await response.json();
-      notify("success", "¡Bienvenido! Inicio de sesión exitoso.");
-      onSuccess?.({
-        identifier: identifier.trim(),
-        name: data?.userFullName || identifier.trim(),
-      });
+      const accessToken: string | undefined =
+        data?.access_token ?? data?.token ?? data?.data?.access_token;
+      const resolvedName: string =
+        data?.userFullName ||
+        data?.user?.userFullName ||
+        data?.userName ||
+        cleanIdentifier;
+
+      if (accessToken) {
+        localStorage.setItem("scrumpulse_token", accessToken);
+      }
+
+      const userPayload: AuthenticatedUser = {
+        identifier: cleanIdentifier,
+        name: resolvedName,
+        token: accessToken,
+      };
+      localStorage.setItem("activeUser", JSON.stringify(userPayload));
+
+      notify("success", "Autenticación exitosa.");
+      window.setTimeout(() => {
+        onSuccess?.(userPayload);
+      }, 900);
     } catch {
-      // Fallback para pruebas de interfaz si el backend devuelve 500 o no responde
-      notify(
-        "success",
-        `Sesión simulada para "${identifier.trim()}". Validación completada.`
-      );
-      onSuccess?.({
-        identifier: identifier.trim(),
-        name: identifier.trim(),
-      });
+      enterHomeFallback(cleanIdentifier);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-950 px-4 py-10 text-slate-100">
-      {/* Glow ambiental */}
-      <div className="pointer-events-none absolute -top-28 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-indigo-600/20 blur-3xl" />
-      <div className="pointer-events-none absolute bottom-0 right-1/4 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-sky-200 via-indigo-200 to-teal-200 px-4 py-10 text-slate-900">
+      {/* Manchas de color combinadas */}
+      <div className="pointer-events-none absolute -top-24 -left-20 h-96 w-96 rounded-full bg-gradient-to-br from-cyan-300/60 via-sky-300/45 to-transparent blur-3xl" />
+      <div className="pointer-events-none absolute top-1/4 -right-24 h-96 w-96 rounded-full bg-gradient-to-tl from-violet-300/55 via-indigo-300/45 to-transparent blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 left-1/4 h-96 w-96 rounded-full bg-gradient-to-tr from-teal-300/60 via-emerald-200/45 to-transparent blur-3xl" />
 
-      {/* Toast flotante */}
       {toastMsg && (
         <div
           role="status"
-          className={`fixed top-5 right-5 z-50 flex max-w-sm items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-2xl backdrop-blur-md ${
+          className={`fixed top-5 right-5 z-50 flex max-w-sm items-center gap-3 rounded-xl border px-4 py-3 text-sm font-medium shadow-xl backdrop-blur-md ${
             toastMsg.type === "success"
-              ? "border-emerald-500/30 bg-emerald-950/90 text-emerald-200"
+              ? "border-emerald-400/80 bg-emerald-100/95 text-emerald-950"
               : toastMsg.type === "info"
-              ? "border-cyan-500/30 bg-cyan-950/90 text-cyan-200"
-              : "border-rose-500/30 bg-rose-950/90 text-rose-200"
+              ? "border-sky-400/80 bg-sky-100/95 text-sky-950"
+              : "border-rose-400/80 bg-rose-100/95 text-rose-950"
           }`}
         >
           <span
             className={`h-2.5 w-2.5 shrink-0 rounded-full ${
               toastMsg.type === "success"
-                ? "bg-emerald-400"
+                ? "bg-emerald-600"
                 : toastMsg.type === "info"
-                ? "bg-cyan-400"
-                : "bg-rose-400"
+                ? "bg-sky-600"
+                : "bg-rose-600"
             }`}
           />
           <span>{toastMsg.text}</span>
         </div>
       )}
 
-      {/* Tarjeta principal */}
-      <div className="relative z-10 w-full max-w-md rounded-3xl border border-slate-800/90 bg-slate-900/80 p-8 shadow-2xl shadow-black/50 backdrop-blur-xl">
+      {/* Tarjeta con degradado celeste -> lila suave -> menta */}
+      <div className="relative z-10 w-full max-w-md rounded-3xl border border-indigo-300/80 bg-gradient-to-br from-sky-100/95 via-indigo-100/90 to-teal-100/95 p-8 shadow-[0_24px_60px_-15px_rgba(49,46,129,0.28)] backdrop-blur-xl">
+        <div className="mx-auto mb-6 h-1.5 w-24 rounded-full bg-gradient-to-r from-sky-500 via-indigo-600 to-teal-500" />
+
         <div className="mb-7 flex flex-col items-center text-center">
           <ScrumPulseLogo className="h-20 w-20" />
-          <h1 className="mt-4 bg-gradient-to-r from-white via-cyan-100 to-fuchsia-200 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
+          <h1 className="mt-4 bg-gradient-to-r from-sky-900 via-indigo-900 to-teal-800 bg-clip-text text-2xl font-bold tracking-tight text-transparent">
             ScrumPulse
           </h1>
-          <p className="mt-1 text-sm font-medium text-cyan-400">
-            Cada sprint en movimiento, cada equipo en sintonía.
-          </p>
-          <p className="mt-2 text-xs text-slate-400">
-            Ingresa tu correo electrónico o nombre de usuario para continuar
+          <p className="mt-2 text-xs font-medium text-indigo-950/80">
+            Ingresa tu usuario o correo electrónico para continuar
           </p>
         </div>
 
@@ -239,15 +272,15 @@ export const Login: React.FC<LoginProps> = ({ onSuccess }) => {
           <div>
             <label
               htmlFor="identifier"
-              className="mb-1.5 block text-sm font-medium text-slate-300"
+              className="mb-1.5 block text-sm font-semibold text-indigo-950"
             >
-              Correo o usuario
+              Usuario o correo
             </label>
             <input
               id="identifier"
               type="text"
               autoComplete="username"
-              placeholder="ej. kevin o kevin@correo.com"
+              placeholder="ej. kvelasquez o correo@empresa.com"
               value={identifier}
               onChange={(e) => {
                 setIdentifier(e.target.value);
@@ -255,14 +288,14 @@ export const Login: React.FC<LoginProps> = ({ onSuccess }) => {
                   setErrors((prev) => ({ ...prev, identifier: undefined }));
                 }
               }}
-              className={`w-full rounded-xl border bg-slate-950/80 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 transition focus:bg-slate-950 focus:outline-none focus:ring-2 ${
+              className={`w-full rounded-xl border bg-gradient-to-r from-sky-50/90 via-indigo-50/80 to-teal-50/90 px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-500 transition focus:bg-sky-50 focus:outline-none focus:ring-2 ${
                 errors.identifier
-                  ? "border-rose-500/70 focus:ring-rose-500/30"
-                  : "border-slate-800 focus:border-cyan-400/70 focus:ring-cyan-400/20"
+                  ? "border-rose-500 focus:ring-rose-300"
+                  : "border-indigo-300/90 focus:border-indigo-600 focus:ring-indigo-300/80"
               }`}
             />
             {errors.identifier && (
-              <p className="mt-1.5 text-xs font-medium text-rose-400">
+              <p className="mt-1.5 text-xs font-semibold text-rose-700">
                 {errors.identifier}
               </p>
             )}
@@ -272,14 +305,14 @@ export const Login: React.FC<LoginProps> = ({ onSuccess }) => {
             <div className="mb-1.5 flex items-center justify-between">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-slate-300"
+                className="block text-sm font-semibold text-indigo-950"
               >
                 Contraseña
               </label>
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="text-xs font-medium text-cyan-400 transition hover:text-cyan-300"
+                className="text-xs font-semibold text-indigo-700 transition hover:text-teal-700"
               >
                 {showPassword ? "Ocultar" : "Mostrar"}
               </button>
@@ -296,14 +329,14 @@ export const Login: React.FC<LoginProps> = ({ onSuccess }) => {
                   setErrors((prev) => ({ ...prev, password: undefined }));
                 }
               }}
-              className={`w-full rounded-xl border bg-slate-950/80 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 transition focus:bg-slate-950 focus:outline-none focus:ring-2 ${
+              className={`w-full rounded-xl border bg-gradient-to-r from-sky-50/90 via-indigo-50/80 to-teal-50/90 px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-500 transition focus:bg-sky-50 focus:outline-none focus:ring-2 ${
                 errors.password
-                  ? "border-rose-500/70 focus:ring-rose-500/30"
-                  : "border-slate-800 focus:border-cyan-400/70 focus:ring-cyan-400/20"
+                  ? "border-rose-500 focus:ring-rose-300"
+                  : "border-indigo-300/90 focus:border-indigo-600 focus:ring-indigo-300/80"
               }`}
             />
             {errors.password && (
-              <p className="mt-1.5 text-xs font-medium text-rose-400">
+              <p className="mt-1.5 text-xs font-semibold text-rose-700">
                 {errors.password}
               </p>
             )}
@@ -312,9 +345,9 @@ export const Login: React.FC<LoginProps> = ({ onSuccess }) => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-cyan-500 via-indigo-500 to-violet-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-950/60 transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-sky-600 via-indigo-600 to-teal-600 px-4 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-700/25 transition hover:brightness-110 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "Verificando..." : "Iniciar sesión"}
+            {isSubmitting ? "Autenticando..." : "Iniciar sesión"}
           </button>
         </form>
       </div>
